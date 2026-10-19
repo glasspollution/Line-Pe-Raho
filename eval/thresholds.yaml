@@ -1,0 +1,136 @@
+# L2 system-eval gates, read by eval/scorecard.py against eval/reports/<ts>/metrics.csv.
+#
+# gate   = must hold or the eval FAILS (blocks the milestone)
+# target = where we want to be; misses are listed as improvement candidates, not failures
+# tol    = allowed absolute worsening vs the baseline scorecard before it counts as a regression
+#
+# Values marked PROVISIONAL are guesses until the M0/M4 measurements exist. Changing a gate needs a
+# PR note with the measurement that justifies it (critic checks). Never loosen a gate to get green.
+version: 1
+
+# metrics.csv must contain these columns (one row per scenario run). run_eval.py owns producing them.
+required_columns:
+  - scenario_id
+  - company_id
+  - noise_profile        # clean | snr20 | snr10 | snr5
+  - agent_greets_first   # 1 | 0
+  - adversarial          # "" or tag: hello_announcement | vocal_music | silent_agent | no_english
+  - reached_human        # 1 | 0
+  - correct_queue        # 1 | 0 (path matches expected_path)
+  - wrong_presses
+  - ivr_seconds
+  - hold_seconds
+  - time_to_human_detect_s   # from ground-truth greeting END (D-3); blank if not reached
+  - false_human_alarms
+  - probe_used           # 1 | 0
+  - summary_ticket_correct   # 1 | 0, blank if not reached
+  - summary_date_correct     # 1 | 0, blank if not reached
+  - prompt_wer           # mean WER on IVR prompts for this run
+  - credits              # from usage meter
+  - disclosure_first     # 1 | 0 — eval/journal_check.py J4 passed
+  - journal_valid        # 1 | 0 — eval/journal_check.py found no problems
+
+# Any single run violating one of these fails the whole eval, regardless of averages.
+hard_per_run:
+  - {metric: disclosure_first, op: "==", value: 1, why: "§0.5 AI disclosure before anything else"}
+  - {metric: journal_valid, op: "==", value: 1, why: "state machine / DTMF / silence invariants"}
+
+rules:
+  - id: reach_clean
+    metric: reached_human
+    agg: mean
+    where: {noise_profile: [clean, snr20], adversarial: [""]}
+    gate: ">= 0.95"
+    target: ">= 1.0"
+    tol: 0.03
+  - id: reach_snr10
+    metric: reached_human
+    agg: mean
+    where: {noise_profile: [snr10], adversarial: [""]}
+    gate: ">= 0.85"
+    target: ">= 0.95"
+    tol: 0.05
+  - id: reach_snr5
+    metric: reached_human
+    agg: mean
+    where: {noise_profile: [snr5]}
+    gate: ">= 0.5"        # PROVISIONAL
+    target: ">= 0.8"
+    tol: 0.1
+  - id: reach_adversarial
+    metric: reached_human
+    agg: mean
+    where: {adversarial: [hello_announcement, vocal_music, silent_agent, no_english]}
+    gate: ">= 0.75"
+    target: ">= 1.0"
+    tol: 0.1
+  - id: correct_queue
+    metric: correct_queue
+    agg: mean
+    gate: ">= 0.9"
+    target: ">= 1.0"
+    tol: 0.03
+  - id: wrong_presses
+    metric: wrong_presses
+    agg: mean
+    gate: "<= 0.5"
+    target: "<= 0.1"
+    tol: 0.1
+  - id: detect_p50
+    metric: time_to_human_detect_s
+    agg: p50
+    gate: "<= 3.0"        # §10.2 target, measured from greeting end (D-3)
+    target: "<= 2.0"
+    tol: 0.3
+  - id: detect_p90
+    metric: time_to_human_detect_s
+    agg: p90
+    gate: "<= 6.0"
+    target: "<= 4.0"
+    tol: 0.5
+  - id: false_alarms_per_hour
+    metric: false_human_alarms
+    agg: per_hour
+    per: hold_seconds
+    gate: "<= 1.0"
+    target: "<= 0.25"
+    tol: 0.25
+  - id: ticket_correct
+    metric: summary_ticket_correct
+    agg: mean
+    where: {reached_human: [1]}
+    gate: ">= 0.9"
+    target: ">= 1.0"
+    tol: 0.03
+  - id: date_correct
+    metric: summary_date_correct
+    agg: mean
+    where: {reached_human: [1]}
+    gate: ">= 0.8"
+    target: ">= 0.95"
+    tol: 0.05
+  - id: wer_clean
+    metric: prompt_wer
+    agg: mean
+    where: {noise_profile: [clean]}
+    gate: "<= 0.15"       # PROVISIONAL until M0 round-trip WER is measured
+    target: "<= 0.08"
+    tol: 0.02
+  - id: wer_snr10
+    metric: prompt_wer
+    agg: mean
+    where: {noise_profile: [snr10]}
+    gate: "<= 0.30"       # PROVISIONAL
+    target: "<= 0.15"
+    tol: 0.03
+  - id: ivr_time_p90
+    metric: ivr_seconds
+    agg: p90
+    gate: "<= 180"
+    target: "<= 90"
+    tol: 10
+  - id: credits_per_run
+    metric: credits
+    agg: mean
+    # informational only (no gate/target) until M0 measures cost per run; add both then
+    tol: 1000000

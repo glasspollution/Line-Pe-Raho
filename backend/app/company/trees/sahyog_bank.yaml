@@ -1,0 +1,93 @@
+# Fictional bank (CLAUDE.md §11.1). Hindi offered first; voice-prompt (ask) node; "connecting you" prompt;
+# a hold announcement that begins with "Hello" (adversarial for the human detector); depth 5.
+id: sahyog_bank
+display_name: Sahyog Bank
+voice: { model: timbre-v3.0, name: Riyaa, language: hi-en }
+known_phrases:
+  - "Thank you for banking with Sahyog Bank."
+root: welcome
+nodes:
+  welcome:
+    say: "Sahyog Bank mein aapka swagat hai. Hindi ke liye 1 dabaiye. For English, press 2."
+    options: { "1": main_hi, "2": main_en }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+
+  main_en:
+    say: "For credit and debit cards, press 1. For savings accounts, press 2. For loans, press 3. To speak to a banking officer, press 0."
+    options: { "1": cards_en, "2": accounts_en, "3": loans_en, "0": connect_en }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  cards_en:
+    collect: { field: registered_mobile, digits: 10, terminator: "#", prompt: "Please enter your 10 digit registered mobile number followed by hash." }
+    next: cards_menu_en
+  cards_menu_en:
+    say: "To block your card, press 1. For a disputed or failed transaction, press 2. To repeat these options, press 9."
+    options: { "1": block_card_en, "2": dispute_ask_en, "9": cards_menu_en }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  block_card_en:
+    say: "Your card blocking request has been noted. To speak to a banking officer, press 0."
+    options: { "0": connect_en }
+    timeout_s: 8
+    on_timeout: hangup
+  dispute_ask_en:
+    ask:
+      expect: speech
+      prompt: "Please tell us the reason for your call in a few words."
+      routes: { refund: connect_en, dispute: connect_en, transaction: connect_en, fraud: connect_en }
+      fallback: connect_en
+  accounts_en:
+    say: "For balance enquiry, press 1. To speak to a banking officer, press 0."
+    options: { "1": balance_en, "0": connect_en }
+    timeout_s: 8
+    on_timeout: goto:connect_en
+  balance_en:
+    say: "Balance enquiry is available on the Sahyog Bank app. Thank you for banking with Sahyog Bank."
+    next: hangup
+  loans_en:
+    say: "For loan enquiries, please hold while we connect you to a loan officer."
+    next: queue_loans
+  connect_en:
+    say: "Please hold, we are connecting you to our customer care executive."
+    next: queue_main
+
+  main_hi:
+    say: "Credit card ke liye 1 dabaiye, savings account ke liye 2 dabaiye. Banking adhikari se baat karne ke liye 0 dabaiye."
+    options: { "1": cards_hi, "2": connect_hi, "0": connect_hi }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  cards_hi:
+    collect: { field: registered_mobile, digits: 10, terminator: "#", prompt: "Kripya apna dus ankon ka registered mobile number darj karein aur hash dabaiye." }
+    next: dispute_ask_hi
+  dispute_ask_hi:
+    ask:
+      expect: speech
+      prompt: "Kripya apni samasya boliye."
+      routes: { refund: connect_hi, transaction: connect_hi, card: connect_hi }
+      fallback: connect_hi
+  connect_hi:
+    say: "Kripya pratiksha karein, hum aapko hamare pratinidhi se jod rahe hain."
+    next: queue_main
+
+  queue_main:
+    hold:
+      duration_s: { min: 60, max: 600 }
+      music: procedural_seed_3
+      announcement_every_s: 30
+      announcements:
+        - "Hello, thank you for calling Sahyog Bank. Your call is important to us, please stay on the line."
+        - "Sabhi pratinidhi abhi vyast hain. Kripya line par bane rahein."
+    then: agent
+  queue_loans:
+    hold:
+      duration_s: { min: 60, max: 600 }
+      music: procedural_seed_5
+      announcement_every_s: 45
+      announcements:
+        - "Hello, all our loan officers are busy. Please stay on the line."
+    then: agent

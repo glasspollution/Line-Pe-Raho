@@ -1,0 +1,240 @@
+# Menu-parser contract corpus (CLAUDE.md §9.2). Used by backend/tests/contract/test_menu_parser.py.
+#
+# Each case:
+#   text:          a single transcript segment as Prisma would emit it (M0 finding: realtime and REST
+#                  "transcribe" output keeps "press one" as words, lowercase, no punctuation) or as the
+#                  YAML/TTS script reads (capitalised, punctuated). Both styles must parse.
+#   options:       {digit: [keywords that must appear in the normalized label]}; digits must match exactly
+#                  unless exact: false (then these digits must be present, extras allowed). Omitted = none.
+#   data_prompt:   {field: registered_mobile|account_id|other, terminator: "#"|null}; omitted = null.
+#                  "other" = sensitive or unknown (PIN, OTP, CVV): the agent must NEVER send profile data.
+#   voice_prompt:  true if the IVR asks the caller to speak; omitted = false
+#   repeat_hint:   true if the segment says how to repeat the menu; omitted = false
+#   needs_llm:     true if rules find no options but the text has press|dabaiye|option|select
+#   or_needs_llm:  true = passing either by parsing the options OR by flagging needs_llm is acceptable
+#
+# Adding cases is encouraged. Changing an existing expectation needs a PR note explaining why
+# (the critic checks this) — the corpus is the spec.
+
+cases:
+  # ---------------- English ----------------
+  - id: en_01_prisma_words
+    text: "press one for recharge and billing press two for data issues press three for new connection"
+    options: {"1": [recharge], "2": [data], "3": [new connection]}
+  - id: en_02_repeat
+    text: "Press 1 for recharge and billing. Press 2 for data issues. Press 9 to repeat this menu."
+    options: {"1": [recharge], "2": [data], "9": [repeat]}
+    repeat_hint: true
+  - id: en_03_ambiguous_to
+    text: "for duplicate deduction or refund press two to speak to our customer care executive press zero"
+    options: {"2": [refund], "0": [executive]}
+  - id: en_04_to_label_press
+    text: "to check your balance press 1 to report a lost card press 2 for all other queries press 3"
+    options: {"1": [balance], "2": [lost card], "3": [other queries]}
+  - id: en_05_press_to
+    text: "press 1 to block your card press 2 to know your balance press 0 to talk to our representative"
+    options: {"1": [block], "2": [balance], "0": [representative]}
+  - id: en_06_if_clause
+    text: "If you are calling about a power outage in your area, press 1. For billing related queries, press 2."
+    options: {"1": [power outage], "2": [billing]}
+  - id: en_07_star
+    text: "press star to go back to the main menu"
+    options: {"*": [main menu]}
+  - id: en_08_hash
+    text: "press hash to return to the previous menu"
+    options: {"#": [previous menu]}
+  - id: en_09_single
+    text: "For English, press 1."
+    options: {"1": [english]}
+  - id: en_10_many
+    text: "press 4 for international roaming press 5 for value added services press 6 for port out press 7 for tariff plans press 8 for complaints"
+    options: {"4": [roaming], "5": [value added], "6": [port], "7": [tariff], "8": [complaints]}
+  - id: en_11_words_single
+    text: "press two for new electricity connection"
+    options: {"2": [electricity connection]}
+  - id: en_12_to_do_is_not_two
+    text: "To do a new recharge press 1. To know your plan details press 2."
+    options: {"1": [recharge], "2": [plan]}
+  - id: en_13_dial
+    text: "Dial 1 for billing. Dial 2 for technical support."
+    options: {"1": [billing], "2": [technical]}
+  - id: en_14_oh_is_zero
+    text: "press oh for operator"
+    options: {"0": [operator]}
+  - id: en_15_select_option
+    text: "select option three for billing"
+    or_needs_llm: true
+    options: {"3": [billing]}
+  - id: en_16_announcement
+    text: "Your call is important to us. Please stay on the line."
+  - id: en_17_wait_time_not_option
+    text: "All our executives are busy right now. Your expected wait time is 4 minutes."
+  - id: en_18_thanks
+    text: "Thank you for calling Nimbus Telecom."
+  - id: en_19_repeated_option
+    text: "press 1 for recharge press 2 for data press 1 for recharge"
+    options: {"1": [recharge], "2": [data]}
+  - id: en_20_data_mobile
+    text: "Please enter your 10 digit registered mobile number followed by hash."
+    data_prompt: {field: registered_mobile, terminator: "#"}
+  - id: en_21_data_account
+    text: "Kindly enter your 12 digit consumer account number followed by the hash key"
+    data_prompt: {field: account_id, terminator: "#"}
+  - id: en_22_data_customer_id
+    text: "please type your customer id followed by hash"
+    data_prompt: {field: account_id, terminator: "#"}
+  - id: en_23_pin_is_sensitive
+    text: "Please enter your four digit ATM PIN"
+    data_prompt: {field: other, terminator: null}
+  - id: en_24_otp_is_sensitive
+    text: "enter the OTP sent to your registered mobile number"
+    data_prompt: {field: other, terminator: null}
+  - id: en_25_voice_reason
+    text: "Please tell us the reason for your call in a few words"
+    voice_prompt: true
+  - id: en_26_voice_query
+    text: "In a few words, please say your query after the beep"
+    voice_prompt: true
+  - id: en_27_repeat_star
+    text: "to repeat these options press star"
+    options: {"*": [repeat]}
+    repeat_hint: true
+  - id: en_28_if_customer
+    text: "press 1 if you are an existing customer press 2 if you are a new customer"
+    options: {"1": [existing], "2": [new customer]}
+  - id: en_29_agent
+    text: "press 0 to speak with an agent"
+    options: {"0": [agent]}
+  - id: en_30_option_style
+    text: "Option 1 billing. Option 2 technical support."
+    or_needs_llm: true
+    options: {"1": [billing], "2": [technical]}
+  - id: en_31_numbers_inside_labels
+    text: "press 1 for 4G and 5G data packs press 2 for 2G"
+    options: {"1": [data packs], "2": [2g]}
+  - id: en_32_amount_inside_label
+    text: "if your recharge of 299 failed press 3"
+    options: {"3": [recharge]}
+  - id: en_33_phone_number_not_option
+    text: "call us at 1800 123 4567 or press 1 for a callback"
+    options: {"1": [callback]}
+  - id: en_34_empty
+    text: ""
+  - id: en_35_truncated
+    text: "for billing press"
+    needs_llm: true
+  - id: en_36_five_six
+    text: "press five for electricity bill payment press six for meter reading"
+    options: {"5": [bill payment], "6": [meter]}
+  - id: en_37_languages
+    text: "press 1 for english press 2 for hindi press 3 for marathi"
+    options: {"1": [english], "2": [hindi], "3": [marathi]}
+
+  # ---------------- Hinglish / Hindi in Latin script ----------------
+  - id: hi_01_welcome_mixed
+    text: "nimbus telecom mein aapka swagat hai for english press one hindi ke liye do dabaiye"
+    options: {"1": [english], "2": [hindi]}
+  - id: hi_02_ke_liye
+    text: "recharge ke liye ek dabaiye data ke liye do dabaiye"
+    options: {"1": [recharge], "2": [data]}
+  - id: hi_03_teen
+    text: "bill ki jaankari ke liye teen dabaiye"
+    options: {"3": [bill]}
+  - id: hi_04_chaar
+    text: "naye connection ke liye chaar dabaiye"
+    options: {"4": [connection]}
+  - id: hi_05_shunya
+    text: "graahak sewa adhikari se baat karne ke liye shunya dabaiye"
+    options: {"0": [baat]}
+  - id: hi_06_agar_to
+    text: "agar aapki bijli nahi aa rahi hai to ek dabaiye"
+    options: {"1": [bijli]}
+  - id: hi_07_digit_first
+    text: "do dabaiye agar aap bill ke baare mein jaanna chahte hain"
+    options: {"2": [bill]}
+  - id: hi_08_dobara
+    text: "dobara sunne ke liye nau dabaiye"
+    options: {"9": [dobara]}
+    repeat_hint: true
+  - id: hi_09_data_then_hash_is_not_option
+    text: "kripya apna dus ankon ka registered mobile number darj karein aur hash dabaiye"
+    data_prompt: {field: registered_mobile, terminator: "#"}
+  - id: hi_10_khaata
+    text: "apna khaata sankhya darj karein"
+    data_prompt: {field: account_id, terminator: null}
+  - id: hi_11_voice_samasya
+    text: "kripya apni samasya boliye"
+    voice_prompt: true
+  - id: hi_12_voice_batayein
+    text: "beep ke baad apni query batayein"
+    voice_prompt: true
+  - id: hi_13_announcement
+    text: "aapki call humare liye mahatvapurn hai kripya line par bane rahein"
+  - id: hi_14_busy
+    text: "sabhi pratinidhi abhi vyast hain kripya pratiksha karein"
+  - id: hi_15_dabayen
+    text: "pratinidhi se baat karne ke liye nau dabayen"
+    options: {"9": [pratinidhi]}
+  - id: hi_16_press_karein
+    text: "complaint darj karne ke liye paanch press karein"
+    options: {"5": [complaint]}
+  - id: hi_17_two_in_one
+    text: "refund ke liye chhe dabaiye aur recharge ke liye saat dabaiye"
+    options: {"6": [refund], "7": [recharge]}
+  - id: hi_18_digit_first_ke_liye
+    text: "aath dabaiye mukhya menu par jaane ke liye"
+    options: {"8": [mukhya menu]}
+  - id: hi_19_star_first
+    text: "star dabaiye pichhle menu ke liye"
+    options: {"*": [pichhle]}
+  - id: hi_20_trailing_without_verb
+    text: "english ke liye ek dabaiye hindi ke liye do"
+    options: {"1": [english]}
+    exact: false
+  - id: hi_21_bank
+    text: "Sahyog Bank mein aapka swagat hai. Credit card ke liye 1 dabaiye, savings account ke liye 2 dabaiye, loan ke liye 3 dabaiye."
+    options: {"1": [credit card], "2": [savings], "3": [loan]}
+  - id: hi_22_bijli_partial
+    text: "Prakash Bijli Board. Bijli kati hai to 1 dabaiye. Bill ke liye 2."
+    options: {"1": [bijli]}
+    exact: false
+  - id: hi_23_zero_word
+    text: "agent se baat karne ke liye zero dabaiye"
+    options: {"0": [agent]}
+  - id: hi_24_press_ek
+    text: "press ek for recharge"
+    options: {"1": [recharge]}
+  - id: hi_25_for_hindi
+    text: "for hindi press two"
+    options: {"2": [hindi]}
+
+  # ---------------- Devanagari (hi-IN sessions) — digits only ----------------
+  - id: dev_01
+    text: "रिचार्ज के लिए एक दबाइए। डेटा के लिए दो दबाइए।"
+    options: {"1": [], "2": []}
+  - id: dev_02
+    text: "अंग्रेज़ी के लिए 1 दबाएं, हिंदी के लिए 2 दबाएं"
+    options: {"1": [], "2": []}
+  - id: dev_03
+    text: "ग्राहक सेवा अधिकारी से बात करने के लिए शून्य दबाइए"
+    options: {"0": []}
+  - id: dev_04_data
+    text: "कृपया अपना दस अंकों का मोबाइल नंबर दर्ज करें और हैश दबाएं"
+    data_prompt: {field: registered_mobile, terminator: "#"}
+  - id: dev_05_announcement
+    text: "आपकी कॉल हमारे लिए महत्वपूर्ण है, कृपया लाइन पर बने रहें"
+  - id: dev_06_repeat
+    text: "दोबारा सुनने के लिए नौ दबाइए"
+    options: {"9": []}
+    repeat_hint: true
+
+normalize:
+  - ["Press ONE, for Recharge!", "press 1 for recharge"]
+  - ["do dabaiye", "2 dabaiye"]
+  - ["press star", "press *"]
+  - ["press hash", "press #"]
+  - ["press pound", "press #"]
+  - ["chaar dabaiye", "4 dabaiye"]
+  - ["char dabaiye", "4 dabaiye"]
+  - ["shunya dabaiye", "0 dabaiye"]
+  - ["press zero", "press 0"]

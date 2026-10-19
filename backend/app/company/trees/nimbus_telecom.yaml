@@ -1,0 +1,77 @@
+# Fictional telecom (CLAUDE.md §11.1). English offered first; no "connecting you" prompt; depth 4.
+id: nimbus_telecom
+display_name: Nimbus Telecom
+voice: { model: timbre-v3.0, name: Riyaa, language: hi-en }
+known_phrases:
+  - "Thank you for calling Nimbus Telecom."
+root: welcome
+nodes:
+  welcome:
+    say: "Nimbus Telecom mein aapka swagat hai. For English press 1. Hindi ke liye 2 dabaiye."
+    options: { "1": main_en, "2": main_hi }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+
+  main_en:
+    say: "Press 1 for recharge and billing. Press 2 for data issues. Press 3 for new connection. Press 9 to repeat."
+    options: { "1": billing_en, "2": data_en, "3": newconn_en, "9": main_en }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  billing_en:
+    collect: { field: registered_mobile, digits: 10, terminator: "#", prompt: "Please enter your 10 digit registered mobile number followed by hash." }
+    next: billing_menu_en
+  billing_menu_en:
+    say: "For duplicate deduction or refund, press 2. To speak to our customer care executive, press 0."
+    options: { "2": queue_refund, "0": queue_refund }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  data_en:
+    say: "For slow internet, press 1. To speak to our customer care executive, press 0."
+    options: { "1": data_tips_en, "0": queue_general }
+    timeout_s: 8
+    on_timeout: goto:queue_general
+  data_tips_en:
+    say: "Please restart your phone and check that mobile data is switched on. Thank you for calling Nimbus Telecom."
+    next: hangup
+  newconn_en:
+    say: "To get a new connection, please visit your nearest Nimbus store. To speak to our customer care executive, press 0."
+    options: { "0": queue_general }
+    timeout_s: 8
+    on_timeout: hangup
+
+  main_hi:
+    say: "Recharge aur bill ke liye 1 dabaiye. Data ki samasya ke liye 2 dabaiye. Dobara sunne ke liye 9 dabaiye."
+    options: { "1": billing_hi, "2": queue_general, "9": main_hi }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  billing_hi:
+    collect: { field: registered_mobile, digits: 10, terminator: "#", prompt: "Kripya apna dus ankon ka registered mobile number darj karein aur hash dabaiye." }
+    next: billing_menu_hi
+  billing_menu_hi:
+    say: "Galat katauti ya refund ke liye 2 dabaiye. Grahak sewa adhikari se baat karne ke liye 0 dabaiye."
+    options: { "2": queue_refund, "0": queue_refund }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+
+  queue_refund:
+    hold:
+      duration_s: { min: 60, max: 600 }
+      music: procedural_seed_7
+      announcement_every_s: 35
+      announcements:
+        - "Aapki call humare liye mahatvapurn hai. Kripya line par bane rahein."
+        - "All our executives are busy. Please stay on the line."
+    then: agent
+  queue_general:
+    hold:
+      duration_s: { min: 60, max: 600 }
+      music: procedural_seed_11
+      announcement_every_s: 40
+      announcements:
+        - "All our executives are busy. Please stay on the line."
+    then: agent

@@ -1,0 +1,61 @@
+{
+  "text_sent": "Press 1 for recharge and billing. Press 2 for data issues.",
+  "tts": {
+    "bytes": 64000,
+    "duration_s": 4.0
+  },
+  "stt_rest": {
+    "status": 200,
+    "latency_s": 0.551,
+    "body": {
+      "success": true,
+      "request_id": "01a1507f-1577-75f8-a80e-f02cc0a813e7",
+      "transcript": "press one for recharge and billing press two for data issues",
+      "model": "gnani-prisma-v2.5",
+      "processing_time": 0.17302370071411133,
+      "end_to_end_latency": 0.25397157669067383,
+      "output": {
+        "literal": "press one for recharge and billing press two for data issues"
+      }
+    }
+  },
+  "stt_realtime": [
+    {
+      "type": "connected",
+      "message": "STT service ready — VAD service connected",
+      "request_id": "01a1507f-1942-70a2-9e56-524e3aba380e",
+      "config": {
+        "sample_rate": 16000,
+        "chunk_size": 512,
+        "partials_enabled": false,
+        "partial_interval_ms": 450,
+        "partial_max_window_s": 15.0,
+        "language_code": "en-IN",
+        "format": "transcribe"
+      },
+      "timestamp": "2026-10-18T19:31:09.333905+00:00",
+      "_rx_s": 0.767
+    },
+    {
+      "type": "speech_start",
+      "utterance_id": "u1d492281",
+      "timestamp": "2026-10-18T19:31:10.022360+00:00",
+      "_rx_s": 1.455
+    },
+    {
+      "type": "transcript",
+      "text": "press one for recharge and billing press two for data issues",
+      "audio_duration_ms": 4384.0,
+      "segment_id": "01a1507f-1942-70a2-9e56-524e3aba380e-seg-1",
+      "segment_index": 1,
+      "utterance_id": "u1d492281",
+      "is_final": true,
+      "latency": 197,
+      "timestamp": "2026-10-18T19:31:14.876956+00:00",
+      "output": {
+        "literal": "press one for recharge and billing press two for data issues"
+      },
+      "_rx_s": 6.315
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# Synthetic phone numbers declared for demo/test use (CLAUDE.md §0.3).
+# The guard rejects any mobile-like number in the repo that is not listed here.
+# Use only numbers from this list in fixtures, profiles, scenarios and docs.
+9000000001
+9000000002
+9000000003
+9000000004
+9000000005
+9000000006
+9000000007
+9000000008
+9000000009

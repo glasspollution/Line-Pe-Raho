@@ -1,0 +1,80 @@
+{
+  "model": "us.moonshotai.kimi-k3",
+  "base_url": "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1",
+  "n": 4,
+  "p50_latency_s": 1.145,
+  "max_latency_s": 1.856,
+  "all_valid_json": true,
+  "runs": [
+    {
+      "effort": "none",
+      "latency_s": 1.856,
+      "valid_json": true,
+      "output": {
+        "action": "press",
+        "digit": "1",
+        "reason": "The goal is a refund for a duplicate recharge deduction, which falls under recharge and billing issues.",
+        "confidence": 0.95
+      },
+      "prompt_tokens": 248,
+      "completion_tokens": 52,
+      "finish_reason": "stop"
+    },
+    {
+      "effort": "none",
+      "latency_s": 1.08,
+      "valid_json": true,
+      "output": {
+        "action": "press",
+        "digit": "1",
+        "reason": "The goal is a refund for a duplicate recharge deduction, which falls under recharge and billing issues.",
+        "confidence": 0.95
+      },
+      "prompt_tokens": 248,
+      "completion_tokens": 46,
+      "finish_reason": "stop"
+    },
+    {
+      "effort": "none",
+      "latency_s": 1.005,
+      "valid_json": true,
+      "output": {
+        "action": "press",
+        "digit": "1",
+        "reason": "The goal is a refund for a duplicate recharge deduction, which falls under recharge and billing issues. Option 1 is the most relevant choice.",
+        "confidence": 0.95
+      },
+      "prompt_tokens": 248,
+      "completion_tokens": 61,
+      "finish_reason": "stop"
+    },
+    {
+      "effort": "none",
+      "latency_s": 1.21,
+      "valid_json": true,
+      "output": {
+        "action": "press",
+        "digit": "1",
+        "reason": "The goal is a refund for a duplicate recharge deduction, which falls under 'recharge and billing'.",
+        "confidence": 0.95
+      },
+      "prompt_tokens": 248,
+      "completion_tokens": 54,
+      "finish_reason": "stop"
+    }
+  ],
+  "default_reasoning": {
+    "effort": "provider-default",
+    "latency_s": 2.742,
+    "valid_json": true,
+    "output": {
+      "action": "press",
+      "digit": "1",
+      "reason": "A refund for a duplicate recharge deduction is a billing/recharge issue, so 'recharge and billing' is the correct menu path.",
+      "confidence": 0.95
+    },
+    "prompt_tokens": 315,
+    "completion_tokens": 245,
+    "finish_reason": "stop"
+  }
+}

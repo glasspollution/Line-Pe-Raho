@@ -1,0 +1,27 @@
+{
+  "_doc": "Expected post-call summary for golden_call.jsonl (CLAUDE.md §12). Segments carry text_itn as the REST ITN pass would produce. Frontend mock mode serves this from GET /api/calls/golden-nimbus-001/summary.",
+  "call_id": "golden-nimbus-001",
+  "segments": {
+    "s7": {"track": "callee", "start": 128.4, "end": 131.2, "text": "hello this is priya from nimbus telecom how may i help you", "text_itn": "hello this is priya from nimbus telecom how may i help you"},
+    "s9": {"track": "callee", "start": 163.4, "end": 171.6, "text": "i can see two deductions of rupees 239 on 15th october i have raised a refund request your complaint number is n m b 4 8 2 1 3 3 7 7", "text_itn": "i can see two deductions of ₹239 on 15th october i have raised a refund request your complaint number is NMB48213377"},
+    "s10": {"track": "callee", "start": 172.0, "end": 176.2, "text": "the refund will be credited to your account by 5th november", "text_itn": "the refund will be credited to your account by 5th November"},
+    "u1": {"track": "user", "start": 157.0, "end": 162.3, "text": "haan ji mera recharge do baar kat gaya 239 rupaye fifteen october ko", "text_itn": "haan ji mera recharge do baar kat gaya ₹239 15 october ko"}
+  },
+  "extraction": {
+    "ticket_id": {"value": "NMB48213377", "evidence": [{"segment_id": "s9", "quote": "your complaint number is NMB48213377"}]},
+    "agent_name": {"value": "Priya", "evidence": [{"segment_id": "s7", "quote": "this is priya from nimbus telecom"}]},
+    "resolution": {"value": "Refund request raised for duplicate recharge deduction", "evidence": [{"segment_id": "s9", "quote": "i have raised a refund request"}]},
+    "promised_by": {"value": "2026-11-05", "evidence": [{"segment_id": "s10", "quote": "credited to your account by 5th november"}]},
+    "amounts": [{"value": 239, "currency": "INR", "evidence": [{"segment_id": "s9", "quote": "two deductions of ₹239"}]}],
+    "next_steps": [{"value": "Wait for refund; call back with ticket ID if not credited by 5 Nov", "evidence": [{"segment_id": "s4x", "quote": "call back if not credited"}]}],
+    "outcome": "ticket_raised"
+  },
+  "expected_verification": {
+    "ticket_id": true,
+    "agent_name": true,
+    "resolution": true,
+    "promised_by": true,
+    "amounts[0]": true,
+    "next_steps[0]": false
+  }
+}

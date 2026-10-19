@@ -1,0 +1,24 @@
+# Legal orchestrator transitions (CLAUDE.md §8). Shared by eval/journal_check.py,
+# the golden-call test and (optionally) the orchestrator's own tests.
+# "any → FAILED" is always legal and not listed.
+initial: IDLE
+terminal: [DONE, FAILED]
+transitions:
+  IDLE: [PLANNING]
+  PLANNING: [DIALING]
+  DIALING: [IVR]
+  IVR: [HOLD, HUMAN_SUSPECTED]
+  HOLD: [IVR, HUMAN_SUSPECTED]
+  HUMAN_SUSPECTED: [HUMAN_CONFIRMED, PROBING, HOLD, IVR]
+  PROBING: [HUMAN_CONFIRMED, HOLD, IVR]
+  HUMAN_CONFIRMED: [DISCLOSING]
+  DISCLOSING: [WAITING_FOR_USER]
+  WAITING_FOR_USER: [BRIDGED, AGENT_SPEAKS, ENDED]
+  AGENT_SPEAKS: [ENDED]
+  BRIDGED: [ENDED]
+  ENDED: [SUMMARIZING]
+  SUMMARIZING: [DONE]
+# Agent may send DTMF only in these states.
+dtmf_states: [IVR]
+# Agent outbound speech is forbidden in these states (muted while bridged).
+silent_states: [BRIDGED]

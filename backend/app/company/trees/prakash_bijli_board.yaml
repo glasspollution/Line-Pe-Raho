@@ -1,0 +1,62 @@
+# Fictional electricity board (CLAUDE.md §11.1). Hindi offered first; consumer account number entry;
+# hummed (vocal-like) hold music to stress the speech detector; no "connecting you" prompt; depth 3.
+id: prakash_bijli_board
+display_name: Prakash Bijli Board
+voice: { model: timbre-v3.0, name: Riyaa, language: hi-en }
+known_phrases:
+  - "Prakash Bijli Board ko call karne ke liye dhanyavaad."
+root: welcome
+nodes:
+  welcome:
+    say: "Prakash Bijli Board mein aapka swagat hai. Hindi ke liye 1 dabaiye. For English, press 2."
+    options: { "1": main_hi, "2": main_en }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+
+  main_en:
+    say: "If there is a power cut in your area, press 1. For billing related queries, press 2. For a new electricity connection, press 3."
+    options: { "1": outage_en, "2": billing_en, "3": newconn_en }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  outage_en:
+    collect: { field: account_id, digits: 12, terminator: "#", prompt: "Please enter your 12 digit consumer account number followed by hash." }
+    next: queue_outage
+  billing_en:
+    collect: { field: account_id, digits: 12, terminator: "#", prompt: "Kindly enter your 12 digit consumer account number followed by the hash key." }
+    next: queue_billing
+  newconn_en:
+    say: "New connection applications are accepted at your nearest Prakash Bijli Board office. Thank you for calling."
+    next: hangup
+
+  main_hi:
+    say: "Bijli kati hai to 1 dabaiye. Bill ki jaankari ke liye 2 dabaiye. Dobara sunne ke liye 9 dabaiye."
+    options: { "1": outage_hi, "2": billing_hi, "9": main_hi }
+    timeout_s: 8
+    on_timeout: repeat
+    max_repeats: 2
+  outage_hi:
+    collect: { field: account_id, digits: 12, terminator: "#", prompt: "Kripya apna barah ankon ka consumer account number darj karein aur hash dabaiye." }
+    next: queue_outage
+  billing_hi:
+    collect: { field: account_id, digits: 12, terminator: "#", prompt: "Kripya apna barah ankon ka consumer account number darj karein aur hash dabaiye." }
+    next: queue_billing
+
+  queue_outage:
+    hold:
+      duration_s: { min: 60, max: 600 }
+      music: procedural_vocal_3
+      announcement_every_s: 40
+      announcements:
+        - "Kripya pratiksha karein. Aapki call humare liye mahatvapurn hai."
+        - "Your complaint will be attended shortly. Please stay on the line."
+    then: agent
+  queue_billing:
+    hold:
+      duration_s: { min: 60, max: 600 }
+      music: procedural_seed_9
+      announcement_every_s: 35
+      announcements:
+        - "Kripya line par bane rahein. Hamare sabhi pratinidhi vyast hain."
+    then: agent

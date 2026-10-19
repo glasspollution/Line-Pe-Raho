@@ -1,0 +1,68 @@
+[project]
+name = "line-pe-raho"
+version = "0.1.0"
+description = "AI agent that waits on customer-care lines and bridges you in when a human answers"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "websockets>=13",
+  "httpx>=0.27",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "sqlmodel>=0.0.21",
+  "numpy>=1.26",
+  "scipy>=1.13",
+  "soundfile>=0.12",
+  "webrtcvad-wheels>=2.0.14",   # prebuilt wheels of webrtcvad (no compiler needed)
+  "rapidfuzz>=3.9",
+  "openai>=1.40",
+  "pyyaml>=6.0",
+  "indic-transliteration>=2.3",
+  "jiwer>=3.0",
+  "matplotlib>=3.8",
+  "python-multipart>=0.0.9",
+  "aws-bedrock-token-generator>=1.1",   # short-lived Bedrock bearer tokens from an AWS profile (D-4)
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+  "pytest-asyncio>=0.23",
+  "ruff>=0.6",
+  "mypy>=1.10",
+  "types-PyYAML",
+]
+
+# Install (no package build needed):  uv pip install -r pyproject.toml --extra dev
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests", "scripts/tests", "eval/tests"]
+pythonpath = ["backend", "."]
+asyncio_mode = "auto"
+junit_family = "xunit1"
+addopts = "-rfE"
+markers = [
+  "live: spends Gnani/LLM credits; skipped unless RUN_LIVE=1",
+  "milestone(name): milestone a contract test belongs to (M0..M5)",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["frontend", "data", "reports"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "ASYNC"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tests", "scripts", "eval"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = false
+check_untyped_defs = true
+explicit_package_bases = true
+mypy_path = "backend:."

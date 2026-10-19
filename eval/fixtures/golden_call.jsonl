@@ -1,0 +1,48 @@
+{"type":"state_changed","t":0.0,"call_id":"golden-nimbus-001","from":"IDLE","to":"PLANNING"}
+{"type":"state_changed","t":0.4,"call_id":"golden-nimbus-001","from":"PLANNING","to":"DIALING","company_id":"nimbus_telecom","noise_profile":"snr10"}
+{"type":"state_changed","t":3.1,"call_id":"golden-nimbus-001","from":"DIALING","to":"IVR"}
+{"type":"transcript","t":9.8,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s1","start":3.6,"end":9.6,"text":"nimbus telecom mein aapka swagat hai for english press one hindi ke liye do dabaiye"}
+{"type":"menu_parsed","t":12.3,"call_id":"golden-nimbus-001","segment_ids":["s1"],"options":[{"digit":"1","label":"english"},{"digit":"2","label":"hindi"}],"complete_reason":"silence_2.5s"}
+{"type":"decision","t":12.31,"call_id":"golden-nimbus-001","kind":"menu_press","method":"rule","digit":"1","reason":"language menu: English option present","confidence":1.0,"latency_ms":9}
+{"type":"dtmf_sent","t":12.5,"call_id":"golden-nimbus-001","digits":"1"}
+{"type":"transcript","t":19.9,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s2","start":13.1,"end":19.7,"text":"press one for recharge and billing press two for data issues press three for new connection press nine to repeat"}
+{"type":"menu_parsed","t":22.4,"call_id":"golden-nimbus-001","segment_ids":["s2"],"options":[{"digit":"1","label":"recharge and billing"},{"digit":"2","label":"data issues"},{"digit":"3","label":"new connection"},{"digit":"9","label":"repeat"}],"complete_reason":"repeat_phrase"}
+{"type":"decision","t":22.41,"call_id":"golden-nimbus-001","kind":"menu_press","method":"rule","digit":"1","reason":"'recharge and billing' matches goal keyword 'recharge' (score 100)","confidence":1.0,"latency_ms":11}
+{"type":"dtmf_sent","t":22.6,"call_id":"golden-nimbus-001","digits":"1"}
+{"type":"transcript","t":27.2,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s3","start":23.0,"end":27.0,"text":"please enter your 10 digit registered mobile number followed by hash"}
+{"type":"decision","t":27.25,"call_id":"golden-nimbus-001","kind":"data_entry","method":"rule","field":"registered_mobile","reason":"data prompt: registered mobile, terminator #","confidence":1.0,"latency_ms":6}
+{"type":"dtmf_sent","t":27.4,"call_id":"golden-nimbus-001","digits_masked":"******0001#","n_digits":11}
+{"type":"transcript","t":35.6,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s4","start":30.1,"end":35.4,"text":"for duplicate deduction or refund press two to speak to our customer care executive press zero"}
+{"type":"menu_parsed","t":38.0,"call_id":"golden-nimbus-001","segment_ids":["s4"],"options":[{"digit":"2","label":"duplicate deduction or refund"},{"digit":"0","label":"speak to our customer care executive"}],"complete_reason":"silence_2.5s"}
+{"type":"decision","t":38.01,"call_id":"golden-nimbus-001","kind":"menu_press","method":"rule","digit":"2","reason":"'duplicate deduction or refund' matches goal keyword 'refund' (score 100)","confidence":1.0,"latency_ms":10}
+{"type":"dtmf_sent","t":38.2,"call_id":"golden-nimbus-001","digits":"2"}
+{"type":"state_changed","t":40.5,"call_id":"golden-nimbus-001","from":"IVR","to":"HOLD"}
+{"type":"hold_started","t":40.5,"call_id":"golden-nimbus-001","reason":"music for 2.0s"}
+{"type":"transcript","t":80.2,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s5","start":75.6,"end":80.0,"text":"aapki call humare liye mahatvapurn hai kripya line par bane rahein"}
+{"type":"announcement_heard","t":80.2,"call_id":"golden-nimbus-001","segment_id":"s5","count":1}
+{"type":"transcript","t":115.1,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s6","start":111.0,"end":114.9,"text":"all our executives are busy please stay on the line"}
+{"type":"announcement_heard","t":115.1,"call_id":"golden-nimbus-001","segment_id":"s6","count":2}
+{"type":"transcript","t":131.4,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s7","start":128.4,"end":131.2,"text":"hello this is priya from nimbus telecom how may i help you"}
+{"type":"state_changed","t":131.45,"call_id":"golden-nimbus-001","from":"HOLD","to":"HUMAN_SUSPECTED"}
+{"type":"human_suspected","t":131.45,"call_id":"golden-nimbus-001","segment_id":"s7","score":0.7,"evidence":["greeting:+0.35","novel:+0.25","no_music_3s:+0.10"],"pending":"turn_taking"}
+{"type":"human_suspected","t":132.45,"call_id":"golden-nimbus-001","segment_id":"s7","score":0.9,"evidence":["greeting:+0.35","novel:+0.25","question_then_silence_1.2s:+0.20","no_music_3s:+0.10"]}
+{"type":"state_changed","t":132.45,"call_id":"golden-nimbus-001","from":"HUMAN_SUSPECTED","to":"HUMAN_CONFIRMED"}
+{"type":"state_changed","t":132.46,"call_id":"golden-nimbus-001","from":"HUMAN_CONFIRMED","to":"DISCLOSING"}
+{"type":"decision","t":132.47,"call_id":"golden-nimbus-001","kind":"disclosure","method":"rule","language":"hi-en","text":"Namaste, main ek AI assistant hoon aur Aarav ji ki taraf se call kar raha hoon. Main unhe abhi line par jod raha hoon, kripya ek pal rukiye.","cached":true,"latency_ms":3}
+{"type":"human_detected","t":132.47,"call_id":"golden-nimbus-001","time_to_detect_s":1.25,"measured_from":"greeting_end"}
+{"type":"state_changed","t":140.9,"call_id":"golden-nimbus-001","from":"DISCLOSING","to":"WAITING_FOR_USER"}
+{"type":"transcript","t":143.0,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s8","start":141.6,"end":142.8,"text":"ji theek hai"}
+{"type":"keepalive_sent","t":152.9,"call_id":"golden-nimbus-001","n":1,"text":"Bas ek second, woh line par aa rahe hain."}
+{"type":"user_joined","t":156.2,"call_id":"golden-nimbus-001"}
+{"type":"state_changed","t":156.2,"call_id":"golden-nimbus-001","from":"WAITING_FOR_USER","to":"BRIDGED"}
+{"type":"transcript","t":162.5,"call_id":"golden-nimbus-001","track":"user","segment_id":"u1","start":157.0,"end":162.3,"text":"haan ji mera recharge do baar kat gaya 239 rupaye fifteen october ko"}
+{"type":"transcript","t":171.8,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s9","start":163.4,"end":171.6,"text":"i can see two deductions of rupees 239 on 15th october i have raised a refund request your complaint number is n m b 4 8 2 1 3 3 7 7"}
+{"type":"transcript","t":176.4,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s10","start":172.0,"end":176.2,"text":"the refund will be credited to your account by 5th november"}
+{"type":"transcript","t":179.0,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s11","start":176.8,"end":178.8,"text":"is there anything else i can help you with"}
+{"type":"transcript","t":181.1,"call_id":"golden-nimbus-001","track":"user","segment_id":"u2","start":179.6,"end":180.9,"text":"nahi thank you"}
+{"type":"transcript","t":184.0,"call_id":"golden-nimbus-001","track":"callee","segment_id":"s12","start":181.5,"end":183.8,"text":"thank you for calling nimbus telecom have a nice day"}
+{"type":"call_ended","t":184.6,"call_id":"golden-nimbus-001","by":"callee","duration_s":184.6,"hold_seconds":88.0,"ivr_seconds":37.4}
+{"type":"state_changed","t":184.6,"call_id":"golden-nimbus-001","from":"BRIDGED","to":"ENDED"}
+{"type":"state_changed","t":185.0,"call_id":"golden-nimbus-001","from":"ENDED","to":"SUMMARIZING"}
+{"type":"summary_ready","t":262.0,"call_id":"golden-nimbus-001","verified_count":5,"unverified_count":1,"outcome":"ticket_raised"}
+{"type":"state_changed","t":262.0,"call_id":"golden-nimbus-001","from":"SUMMARIZING","to":"DONE"}

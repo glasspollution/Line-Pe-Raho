@@ -1,0 +1,32 @@
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# runtime data (sqlite, recordings, journals, tts cache)
+data/
+
+# local gate outputs (CI uploads these as artifacts)
+reports/
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+
+# node / frontend
+node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

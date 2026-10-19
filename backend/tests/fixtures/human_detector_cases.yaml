@@ -1,0 +1,84 @@
+# HumanDetector scoring table (CLAUDE.md §10.2). Used by test_human_detector.py.
+# bucket: confirm (>= 0.85) | probe (0.5 – 0.85) | reject (< 0.5)
+# remember: prompts/announcements heard earlier in the call. known: the company's known-phrase list.
+# evidence flags default to false / 0.0.
+#
+# Weights may be retuned from eval data (§10, §21). If a retune moves a case to another bucket,
+# update the case in the same PR with the eval evidence. Adversarial cases (marked adv) must not
+# move toward "confirm" without owner sign-off.
+
+cases:
+  - id: greeting_full_context
+    text: "hello this is priya from nimbus telecom how may i help you"
+    speech_no_music_before: true
+    after_connecting_prompt: true
+    silence_after_s: 1.5
+    bucket: confirm
+  - id: greeting_no_context
+    text: "hello this is priya from nimbus telecom how may i help you"
+    speech_no_music_before: true
+    bucket: probe
+  - id: hindi_greeting_with_turn
+    text: "namaste main rahul bol raha hoon sahyog bank se bataiye main aapki kaise madad kar sakta hoon"
+    speech_no_music_before: true
+    silence_after_s: 1.4
+    bucket: confirm
+  - id: good_morning_after_connecting
+    text: "good morning thank you for calling how can i help"
+    speech_no_music_before: true
+    after_connecting_prompt: true
+    bucket: probe
+  - id: adv_hello_announcement_over_music
+    text: "hello your call is important to us please stay on the line"
+    music_under: true
+    bucket: reject
+  - id: adv_hello_announcement_repeat
+    text: "hello your call is important to us please stay on the line"
+    remember: ["hello your call is important to us please stay on the line"]
+    music_under: true
+    bucket: reject
+  - id: hindi_announcement_heard_before
+    text: "aapki call humare liye mahatvapurn hai kripya line par bane rahein"
+    remember: ["aapki call humare liye mahatvapurn hai kripya line par bane rahein"]
+    bucket: reject
+  - id: busy_announcement_first_time_no_music
+    text: "all our executives are busy please stay on the line"
+    speech_no_music_before: true
+    bucket: reject
+  - id: ivr_prompt_repeated
+    text: "press one for recharge and billing press two for data issues"
+    remember: ["press one for recharge and billing press two for data issues"]
+    speech_no_music_before: true
+    bucket: reject
+  - id: adv_vocal_hold_music
+    text: "la la la hmm hmm"
+    music_under: true
+    bucket: reject
+  - id: novel_question_then_silence
+    text: "haan ji bataiye aapka registered number kya hai"
+    speech_no_music_before: true
+    silence_after_s: 1.5
+    bucket: probe
+  - id: known_company_phrase
+    text: "thank you for holding your call will be answered shortly"
+    known: ["thank you for holding your call will be answered shortly"]
+    speech_no_music_before: true
+    bucket: reject
+  - id: adv_silent_agent_short_hello
+    text: "hello"
+    speech_no_music_before: true
+    after_connecting_prompt: true
+    bucket: probe
+  - id: this_is_name_no_context
+    text: "this is ankit how can i help you today"
+    bucket: probe
+  - id: fuzzy_repeat_of_announcement
+    text: "all our executive are busy please stay on line"
+    remember: ["all our executives are busy please stay on the line"]
+    speech_no_music_before: true
+    bucket: reject
+  - id: kaise_madad_with_turn
+    text: "ji namaste kahiye kaise madad karun"
+    speech_no_music_before: true
+    silence_after_s: 1.3
+    bucket: confirm
