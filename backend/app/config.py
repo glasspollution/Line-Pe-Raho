@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     tts_model: str = "timbre-v3.0"
     tts_agent_voice: str = "Shivani"
     tts_ivr_voice: str = "Riyaa"
+    tts_company_agent_voice: str = "Avinash"  # auto-agent (company employee) in sim/live runs
+    tts_sim_user_voice: str = "Shubham"  # simulated user in live runs (a real user speaks for themselves)
 
     # --- LLM (§0.2, §9.4): Kimi K3 on Amazon Bedrock by default (D-4); any OpenAI-compatible endpoint works ---
     llm_base_url: str = "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1"
@@ -44,6 +46,9 @@ class Settings(BaseSettings):
     llm_max_tokens_postcall: int = 3000
     llm_reasoning_effort_realtime: str = "none"  # Kimi K3 defaults to "max"; "" = don't send the field
     llm_reasoning_effort_postcall: str = "low"
+    llm_reasoning_effort_plan: str = "none"  # the user waits on planning; "low" took 8-20 s
+    llm_max_tokens_plan: int = 800
+    llm_timeout_plan_s: float = 15.0
 
     # --- Line / runtime (§6, §17) ---
     line_kind: Literal["virtual", "exotel"] = "virtual"
@@ -131,6 +136,10 @@ class Settings(BaseSettings):
     ask_max_s: float = 8.0
     ask_end_silence_s: float = 1.0
     ask_speech_dbfs: float = -40.0
+
+    # --- API (§14) ---
+    api_use_llm: bool = True  # plan via the LLM (and menus/summary in live calls); false = rules only
+    transcribe_max_s: float = 30.0
 
     # --- Post-call (§12) ---
     verify_quote_fuzzy_min: int = 90

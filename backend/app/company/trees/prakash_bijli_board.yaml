@@ -5,6 +5,7 @@ display_name: Prakash Bijli Board
 voice: { model: timbre-v3.0, name: Riyaa, language: hi-en }
 known_phrases:
   - "Prakash Bijli Board ko call karne ke liye dhanyavaad."
+ticket_prefix: PBB  # complaint/ticket IDs look like PBB + 8 digits
 root: welcome
 nodes:
   welcome:

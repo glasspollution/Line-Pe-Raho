@@ -72,11 +72,17 @@ class LLMClient:
         return {"type": "json_schema", "json_schema": {"name": model.__name__, "schema": model.model_json_schema(),
                                                         "strict": False}}
 
-    async def complete_json(self, system: str, user: str, model: type[M], realtime: bool = True) -> M:
+    async def complete_json(self, system: str, user: str, model: type[M], realtime: bool = True,
+                            effort: str | None = None, max_tokens: int | None = None,
+                            timeout_s: float | None = None) -> M:
+        """realtime picks the default budget; effort/max_tokens/timeout_s override it per call."""
         s = self.s
-        effort = s.llm_reasoning_effort_realtime if realtime else s.llm_reasoning_effort_postcall
-        max_tokens = s.llm_max_tokens_realtime if realtime else s.llm_max_tokens_postcall
-        timeout = s.llm_timeout_realtime_s if realtime else s.llm_timeout_postcall_s
+        if effort is None:
+            effort = s.llm_reasoning_effort_realtime if realtime else s.llm_reasoning_effort_postcall
+        if max_tokens is None:
+            max_tokens = s.llm_max_tokens_realtime if realtime else s.llm_max_tokens_postcall
+        timeout = timeout_s if timeout_s is not None else (
+            s.llm_timeout_realtime_s if realtime else s.llm_timeout_postcall_s)
         system = system.rstrip() + "\nOutput JSON only, matching the provided schema."
         messages: list[dict[str, str]] = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         prompt_hash = hashlib.sha1(json.dumps(messages, ensure_ascii=False).encode()).hexdigest()[:12]

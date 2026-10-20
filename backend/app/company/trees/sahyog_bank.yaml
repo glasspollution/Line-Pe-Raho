@@ -5,6 +5,7 @@ display_name: Sahyog Bank
 voice: { model: timbre-v3.0, name: Riyaa, language: hi-en }
 known_phrases:
   - "Thank you for banking with Sahyog Bank."
+ticket_prefix: SHB  # complaint/ticket IDs look like SHB + 8 digits
 root: welcome
 nodes:
   welcome:

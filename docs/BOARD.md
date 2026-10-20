@@ -28,7 +28,7 @@ Resolved (2026-10-19):
   - tests run against a local fake WS server (loopback only)
   - they assert header names, frame sizes and real-time pacing (fake clock), rotation and dedupe
   - the sample-rate question in EVAL_LOOPS "Recorded API facts" is resolved, with the answer recorded there
-- [ ] T-006 `gnani/stt_batch.py`: create/start/poll(≥10 s)/files/download, with 1 h URL expiry handling. **Done when:** fake-HTTP lifecycle test, including expiry and retry.
+- [ ] T-006 (optional: realtime segments + local ITN already give verified summaries) `gnani/stt_batch.py`: create/start/poll(≥10 s)/files/download, with 1 h URL expiry handling. **Done when:** fake-HTTP lifecycle test, including expiry and retry.
 - [x] T-007 `llm/client.py`:
   - OpenAI-compatible (Bedrock Chat Completions)
   - `response_format` JSON schema from pydantic, one retry on invalid JSON
@@ -50,22 +50,22 @@ Resolved (2026-10-19):
 
 ## M2: Agent (Oct 24–27)
 - [x] T-201 `agent/menu_parser.py` (rules; the `needs_llm` flag is set; wiring the actual LLM fallback call happens in T-202 once T-007 exists). **Done when:** `test_menu_parser.py` (68-case corpus and MenuBuffer).
-- [~] T-202 (rules done: language, goal relevance, destructive-option guard, agent fallback; the LLM path waits for T-007) `agent/ivr_decider.py`: rules first, then the LLM fallback (faked), confidence ≥ 0.6. **Done when:** tests for the goal-keyword press, the agent preference when `needs_human`, the English language preference, and LLM fallback with a fake that includes low-confidence → repeat.
+- [x] T-202 (done, incl. the async LLM fallback; rules: language, goal relevance, destructive-option guard, agent fallback; the LLM path waits for T-007) `agent/ivr_decider.py`: rules first, then the LLM fallback (faked), confidence ≥ 0.6. **Done when:** tests for the goal-keyword press, the agent preference when `needs_human`, the English language preference, and LLM fallback with a fake that includes low-confidence → repeat.
 - [x] T-203 `audio/vad.py` and `audio/classifier.py` (32 tests; babble and real-recording tuning in eval). **Done when:** labels are correct on synthetic silence, tone (DTMF/ringback), procedural music (T-107) and TTS-speech fixtures; thresholds live in config.
 - [x] T-204 `agent/human_detector.py` (+ `is_connecting_prompt`; every tree announcement is rejected). **Done when:** `test_human_detector.py`.
-- [~] T-205 `agent/phrases.py` done; PhraseCache warmup at startup waits for T-003. **Done when:** `test_phrases.py`; startup warmup is tested with a fake TTS.
+- [x] T-205 `agent/phrases.py`; phrases are pre-synthesised per call (live runner and CallManager). **Done when:** `test_phrases.py`; startup warmup is tested with a fake TTS.
 - [x] T-206 `agent/orchestrator.py` (+ `app/sim/`: oracle STT, scripted agent, harness; 8 full simulated calls pass J1–J7). Real STT/TTS wiring and the post-call hand-off come later. **Done when:**
   - scripted scenarios covering the happy path, probe path, silent agent, hold timeout, same menu 3× → fallback keys, and user not joining
   - each produces a journal that passes `journal_check --complete`
-- [ ] T-207 `agent/bridge.py` and `/ws/user-audio`. **Done when:** a loopback WS test shows two-way audio, agent outbound muted while BRIDGED (J6), and STT continuing on the callee track.
-- [ ] T-208 `company/auto_agent.py` (LLM + Timbre persona, ticket `NMB` + 8 digits, promised date) that writes ground truth. Needs T-009 for live use. **Done when:** tests run against fake LLM and TTS.
+- [x] T-207 `agent/bridge.py` and `/ws/user-audio`. **Done when:** a loopback WS test shows two-way audio, agent outbound muted while BRIDGED (J6), and STT continuing on the callee track.
+- [x] T-208 `company/auto_agent.py` (LLM + Timbre persona, ticket `NMB` + 8 digits, promised date) that writes ground truth. Needs T-009 for live use. **Done when:** tests run against fake LLM and TTS.
 - [ ] T-209 `[owner-budget]` M2 acceptance: task → human → user joined on Nimbus at snr10, 3 of 3 live runs; the journals pass J1–J7.
 
 ## M3: Summary, UI, eval v1 (Oct 28–30)
-- [ ] T-301 `postcall/pipeline.py`: batch → merge → ITN slices, with realtime segments as fallback. **Done when:** fake-client tests, including the batch-failure fallback.
-- [ ] T-302 `postcall/extract.py`: LLM JSON matching the §12 schema, as a pydantic model. **Done when:** a fake LLM test and a schema-violation retry test.
-- [ ] T-303 `postcall/verify.py`. **Done when:** `test_verify.py`.
-- [ ] T-304 REST and WS API per §14, with SQLModel tables per §13. **Done when:** httpx AsyncClient tests for every route; `/ws/events` replays a journal.
+- [x] T-301 `postcall/pipeline.py`: batch → merge → ITN slices, with realtime segments as fallback. **Done when:** fake-client tests, including the batch-failure fallback.
+- [x] T-302 `postcall/extract.py`: LLM JSON matching the §12 schema, as a pydantic model. **Done when:** a fake LLM test and a schema-violation retry test.
+- [x] T-303 `postcall/verify.py`. **Done when:** `test_verify.py`.
+- [x] T-304 REST and WS API per §14, with SQLModel tables per §13. **Done when:** httpx AsyncClient tests for every route; `/ws/events` replays a journal.
 - [ ] T-305 Frontend scaffold: Vite, React, TS, Tailwind and shadcn/ui; mock mode replaying `eval/fixtures/golden_call.jsonl`; the required npm scripts; Playwright and axe. **Done when:** `scripts/check.py` runs the frontend steps green (docs/FRONTEND.md "Definition of done").
 - [ ] T-306 NewTask page. T-307 LiveCall page. T-308 Summary page. T-309 CompanyConsole. T-310 EvalReport. **Done when:** each page's e2e specs in docs/FRONTEND.md pass, and `/ui-check` shows no P0 or P1 issues.
 - [ ] T-311 `eval/run_eval.py` v1: the scenario YAMLs and matrix, `metrics.csv` with all required columns, `journal_check` per run, and charts. **Done when:** a `--matrix smoke` run (fake STT and TTS, about 2 min) produces a scorecard that passes the schema check. The M3 acceptance needs 5 auto-agent runs with correct ticket IDs.
@@ -80,3 +80,10 @@ Resolved (2026-10-19):
 - [ ] T-501 Bug bash from the critic, eval and UI notes.
 - [ ] T-502 S1 agent-speaks mode (only once the MVP is green). It must never agree to payments, and J4 still applies.
 - [ ] T-503 `[owner]` Submission write-up.
+
+## Follow-ups (2026-10-20)
+- [ ] F-1 The company auto-agent sometimes takes the second half of our Hinglish disclosure as the customer speaking, because live Prisma transcribes "jod rahi / pal rukiye" variably. Classify its turns more robustly (an LLM intent check, or match against our known phrase list).
+- [ ] F-2 Refactor: one call builder shared by `sim/harness.py`, `sim/live.py` and `runtime.py` (the wiring is duplicated today).
+- [ ] F-3 T-006 Prisma Batch client (optional; adds a minute or more of polling per call).
+- [ ] F-4 Frontend (T-305..T-310): brainstorm the format with the owner first.
+

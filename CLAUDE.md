@@ -774,6 +774,20 @@ Agents work unattended. Before doing anything, read **docs/AGENT_LOOP.md** (how 
 - 2026-10-19 (owner): D-1 resolved: the liveness probe itself discloses AI (§10.3); probe events carry `discloses_ai: true`.
 - 2026-10-19 (owner): D-2 resolved: single local session on the owner's machine for now; BOARD.md is the task list. Revisit when moving to cloud agents.
 - 2026-10-19 (owner): D-3 resolved: detection latency is measured from the END of the greeting segment; gate p50 ≤ 3 s.
+- 2026-10-20: Backend end to end (N-1..N-7):
+  - **Planner:** Kimi with its own fast budget (`llm_reasoning_effort_plan=none`, 3.5–5 s vs 8–20 s at "low"); the LLM plan is sanitised; rules fallback.
+  - **Company side:** a scripted-adaptive auto-agent (deterministic ground truth), which spells ticket prefixes phonetically ("N for Nashik") because phone lines blur B/D/M/N.
+  - **User side:** the Bridge, plus `/ws/user-audio`.
+  - **Post-call:**
+    - realtime segments, our own lines and the user track (Prisma REST) form the timeline
+    - local ITN: phonetic letters, digit words, merged blocks
+    - LLM or rules extraction, then the verifier
+    - a known `ticket_prefix` per company flags misheard IDs as ⚠
+    - Batch STT is optional.
+  - **IVR LLM fallback** is async (never blocks the tick) and confidence-gated.
+  - **API** per §14 with a CallManager: sim (free, real-time pace) or live. SQLite holds tasks and calls; journals, recordings and summaries are files.
+  - **`scripts/e2e.py`:** offline (seconds) or `--live`. Third live run: ticket, date and name all matched the ground truth and verified; detection 1.2 s, no probe.
+  - **Metered for today's 3 live e2e runs:** 489 s realtime STT, 108 s REST STT, 1,352 TTS characters, about 6 Kimi calls.
 - 2026-10-20: First live runs (real Timbre + Prisma realtime, Nimbus, snr10):
   - DONE, path 1-1-2, prompt WER 1.6%.
   - STT end-of-speech estimates run early on real audio, so turn-taking now uses the classifier's speech end (`human_end_slack_s`). Detection went from probe/8–10 s to 2.46 s with no probe.

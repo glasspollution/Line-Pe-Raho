@@ -13,23 +13,29 @@ Interfaces it needs (fakes in app/sim for offline runs):
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import asyncio
+import json
+import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Protocol
 
 from app.agent import phrases
+from app.agent.bridge import Bridge
 from app.agent.human_detector import GREETING_RE, HumanDetector, SegmentEvidence, is_connecting_prompt
-from app.agent.ivr_decider import IVRDecider
+from app.agent.ivr_decider import RISKY_RE, IVRDecider
 from app.agent.menu_parser import MenuBuffer, SegmentParse, parse_segment
 from app.audio.classifier import AudioClassifier
 from app.audio.frames import FRAME_BYTES
 from app.config import Settings, get_settings
 from app.journal import Journal, mask_digits
 from app.line.virtual import VirtualLine
-from app.llm.schemas import CallPlan
-from app.sim.oracle_stt import Transcript
+from app.llm.schemas import CallPlan, IVRDecisionOut
+from app.sim.oracle_stt import Transcript, Utterance
 
 TICK = 0.02
+PROMPTS = Path(__file__).resolve().parents[1] / "llm" / "prompts"
 
 
 class STTStream(Protocol):
@@ -72,6 +78,9 @@ class CallOrchestrator:
         classifier: AudioClassifier | None = None,
         settings: Settings | None = None,
         on_frame: Callable[[float, bytes], None] | None = None,
+        bridge: Bridge | None = None,
+        summarizer: Callable[[CallOrchestrator], Awaitable[dict[str, Any]]] | None = None,
+        llm: Any = None,  # LLMClient-like (complete_json); used when IVR rules can't decide (§9.3)
     ) -> None:
         self.s = settings or get_settings()
         self.plan, self.profile, self.name = plan, profile, user_first_name
@@ -81,6 +90,14 @@ class CallOrchestrator:
         self.detector = detector or HumanDetector(settings=self.s)
         self.clf = classifier or AudioClassifier(self.s)
         self.on_frame = on_frame
+        self.bridge = bridge
+        self.summarizer = summarizer
+        self.summary: dict[str, Any] | None = None
+        self.llm = llm
+        self._llm_task: asyncio.Task[Any] | None = None
+        self._llm_meta: dict[str, Any] = {}
+        self._menu_version = 0
+        self.spoken: list[Utterance] = []  # our agent's own speech with line times (post-call timeline)
         self.state = "IDLE"
         self.t = 0.0
         self.result = CallResult("IDLE")
@@ -123,6 +140,7 @@ class CallOrchestrator:
             await self.line.send_audio(pcm[i : i + FRAME_BYTES])
         start = max(self._busy_until, self.line.line_time())
         self._busy_until = start + len(pcm) / 16000
+        self.spoken.append(Utterance(text, round(start, 3), round(self._busy_until, 3)))
         return self._busy_until
 
     async def _press(self, digits: str) -> None:
@@ -159,6 +177,12 @@ class CallOrchestrator:
                             start=tr.start, end=tr.end, text=tr.text)
                 self._last_callee_speech_t = max(self._last_callee_speech_t, tr.end)
             await self._step(transcripts)
+            if self.bridge is not None:
+                self.bridge.active = self.state == "BRIDGED"
+                if self.bridge.active:  # user <-> line; our agent stays muted
+                    self.bridge.to_user(frame)
+                    for f in self.bridge.take_uplink():
+                        await self.line.send_audio(f)
             if self.state in ("ENDED", "FAILED"):
                 break
         if self.state not in ("ENDED", "FAILED"):
@@ -168,10 +192,22 @@ class CallOrchestrator:
                 self._goto("ENDED")
             else:
                 self._fail(f"far end hung up during {self.state}")
+        if self._llm_task is not None:
+            self._llm_task.cancel()
         await self.line.hangup()
         if self.state == "ENDED":
             self._goto("SUMMARIZING")
-            self.j.emit("summary_ready", t=self.t, skipped=True, reason="post-call pipeline not wired yet (M3)")
+            if self.summarizer is None:
+                self.j.emit("summary_ready", t=self.t, skipped=True, reason="no post-call pipeline configured")
+            else:
+                try:
+                    self.summary = await self.summarizer(self)
+                    self.j.emit("summary_ready", t=self.t, outcome=self.summary["outcome"],
+                                verified_count=self.summary["verified_count"],
+                                unverified_count=self.summary["unverified_count"], method=self.summary["method"])
+                except Exception as e:  # noqa: BLE001 - a failed summary must not lose the call record
+                    self.j.emit("error", t=self.t, message=f"post-call pipeline failed: {type(e).__name__}: {e}")
+                    self.j.emit("summary_ready", t=self.t, skipped=True, reason="post-call pipeline failed")
             self._goto("DONE")
         self.result.final_state = self.state
         return self.result
@@ -224,8 +260,12 @@ class CallOrchestrator:
             p = parse_segment(tr.text, tr.segment_id)
             if p.options:
                 self._menu.add(p, tr.end)
+                self._menu_version += 1
                 self.j.emit("menu_parsed", t=t, segment_ids=[tr.segment_id],
                             options=[{"digit": o.digit, "label": o.label} for o in p.options])
+                continue
+            if p.needs_llm and self.llm is not None and self._llm_task is None:
+                self._start_llm([], tr.text)  # "press ..." heard but no options parsed (§9.2 LLM fallback)
                 continue
             if p.data_prompt is not None:
                 await self._data_prompt(p)
@@ -239,10 +279,12 @@ class CallOrchestrator:
                 await self._consider_human(tr)
                 if self.state != "IVR":
                     return
+        if await self._poll_llm():
+            return
         if self._menu.is_complete(t) and t >= self._busy_until:
             await self._decide_menu()
             return
-        if not self._menu.options and self.clf.sustained_music and t >= self._busy_until:
+        if not self._menu.options and self._llm_task is None and self.clf.sustained_music and t >= self._busy_until:
             self._hold_started = t
             self._goto("HOLD")
             self.j.emit("hold_started", t=t, reason="sustained music")
@@ -265,6 +307,12 @@ class CallOrchestrator:
         sig = tuple(sorted(o.digit + ":" + o.label for o in opts))
         self._menu_seen[sig] = self._menu_seen.get(sig, 0) + 1
         d = self.decider.decide(self.plan, opts, self.result.path)
+        if (d.method == "fallback" and d.action != "press" and self.llm is not None and self._llm_task is None
+                and self._menu_seen[sig] < self.s.same_menu_max_repeats):
+            menu_text = " ".join(seg.text for seg in self._menu.segments)
+            self._menu.reset()
+            self._start_llm(opts, menu_text)  # rules can't decide: ask the LLM without blocking the call
+            return
         digit = d.digit if d.action == "press" else None
         reason, method = d.reason, d.method
         if digit is None and self._menu_seen[sig] >= self.s.same_menu_max_repeats:
@@ -287,6 +335,48 @@ class CallOrchestrator:
             self._fail("IVR deeper than max_ivr_depth")
             return
         await self._press(digit)
+
+    def _start_llm(self, opts: list[Any], menu_text: str) -> None:
+        user = json.dumps({"goal": self.plan.goal, "goal_keywords": self.plan.goal_keywords,
+                           "menu_heard": menu_text, "options": [{"digit": o.digit, "label": o.label} for o in opts],
+                           "keys_pressed_so_far": self.result.path}, ensure_ascii=False)
+        system = (PROMPTS / "ivr_decide.md").read_text(encoding="utf-8")
+        self._llm_meta = {"version": self._menu_version, "digits": {o.digit for o in opts},
+                          "labels": {o.digit: o.label for o in opts}, "t0": time.perf_counter()}
+        self._llm_task = asyncio.get_running_loop().create_task(
+            self.llm.complete_json(system, user, IVRDecisionOut, realtime=True))
+
+    async def _poll_llm(self) -> bool:
+        task = self._llm_task
+        if task is None or not task.done():
+            return False
+        self._llm_task = None
+        meta = self._llm_meta
+        latency_ms = int((time.perf_counter() - meta["t0"]) * 1000)
+        try:
+            out: IVRDecisionOut = task.result()
+        except Exception as e:  # noqa: BLE001 - LLM failure: let the menu repeat; fallback keys follow
+            self.j.emit("decision", t=self.t, kind="menu_press", method="llm", action="error",
+                        reason=f"LLM failed: {type(e).__name__}", latency_ms=latency_ms)
+            return False
+        if meta["version"] != self._menu_version:
+            self.j.emit("decision", t=self.t, kind="menu_press", method="llm", action="stale",
+                        reason="a newer menu arrived while the LLM was deciding", latency_ms=latency_ms)
+            return False
+        digit = out.digit if out.action == "press" else None
+        valid = digit is not None and (digit in meta["digits"] or (not meta["digits"] and digit in "0123456789*#"))
+        risky = digit is not None and bool(RISKY_RE.search(meta["labels"].get(digit, "")))
+        if not valid or risky or out.confidence < self.s.decider_llm_min_confidence:
+            self.j.emit("decision", t=self.t, kind="menu_press", method="llm",
+                        action="repeat" if out.action == "press" else out.action, reason=out.reason,
+                        confidence=out.confidence, latency_ms=latency_ms)
+            return False
+        assert digit is not None
+        self.j.emit("decision", t=self.t, kind="menu_press", method="llm", digit=digit, reason=out.reason,
+                    confidence=out.confidence, latency_ms=latency_ms)
+        self.result.path.append(digit)
+        await self._press(digit)
+        return True
 
     # ---------- HOLD and human detection ----------
     def _evidence(self, tr: Transcript, silence_after: float = 0.0) -> SegmentEvidence:

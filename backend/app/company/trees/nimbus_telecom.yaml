@@ -4,6 +4,7 @@ display_name: Nimbus Telecom
 voice: { model: timbre-v3.0, name: Riyaa, language: hi-en }
 known_phrases:
   - "Thank you for calling Nimbus Telecom."
+ticket_prefix: NMB  # complaint/ticket IDs look like NMB + 8 digits
 root: welcome
 nodes:
   welcome:
